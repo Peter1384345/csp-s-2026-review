@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSP-S 2026 · 第二轮考点作战系统</title>
+<style>
+:root{
+  --bg:#05070f;
+  --bg2:#0a0f1e;
+  --panel:rgba(13,20,40,0.82);
+  --line:#1e3a5f;
+  --cyan:#00e5ff;
+  --magenta:#ff2bd6;
+  --green:#3dff9a;
+  --yellow:#ffe66d;
+  --purple:#b07cff;
+  --red:#ff5c7a;
+  --text:#c8d6e5;
+  --dim:#5f7ea6;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Cascadia Code","Consolas","JetBrains Mono","Microsoft YaHei",monospace;
+  line-height:1.65;
+  overflow-x:hidden;
+  position:relative;
+}
+/* ===== 背景扫描线 & 网格 ===== */
+body::before{
+  content:"";
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,229,255,0.025) 0 2px, transparent 2px 4px),
+    linear-gradient(135deg, #05070f 0%, #0a1020 55%, #0d0718 100%);
+}
+body::after{
+  content:"";
+  position:fixed;left:0;right:0;height:140px;top:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg, rgba(0,229,255,0.08), transparent);
+  animation:scan 7s linear infinite;
+}
+@keyframes scan{
+  0%{transform:translateY(-140px)}
+  100%{transform:translateY(100vh)}
+}
+.wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:28px 20px 80px}
+
+/* ===== 终端头部 ===== */
+.term{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 0 28px rgba(0,229,255,0.12), inset 0 0 40px rgba(0,229,255,0.03);
+  margin-bottom:34px;
+  backdrop-filter:blur(4px);
+}
+.term-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;
+  background:linear-gradient(90deg,#10182e,#0d1322);
+  border-bottom:1px solid var(--line);
+}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.term-title{color:var(--dim);font-size:12px;margin-left:10px;letter-spacing:1px}
+.term-body{padding:20px 22px;min-height:120px}
+.cmd{color:var(--green);font-weight:700}
+.prompt{color:var(--cyan)}
+.cursor{display:inline-block;width:9px;height:16px;background:var(--cyan);vertical-align:middle;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.type-line{white-space:pre-wrap;font-size:14px}
+
+/* ===== 标题 ===== */
+.hero{text-align:center;margin:14px 0 8px}
+.hero h1{
+  font-size:clamp(26px,5vw,46px);
+  background:linear-gradient(90deg,var(--cyan),var(--purple),var(--magenta),var(--cyan));
+  background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:flow 6s linear infinite;
+  letter-spacing:3px;
+  text-shadow:0 0 30px rgba(0,229,255,0.25);
+}
+@keyframes flow{0%{background-position:0% 0}100%{background-position:300% 0}}
+.hero .sub{color:var(--dim);font-size:14px;letter-spacing:4px;margin-top:6px}
+
+/* ===== 导航 ===== */
+.nav{
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:24px 0 34px;
+}
+.nav a{
+  color:var(--cyan);text-decoration:none;font-size:13px;
+  border:1px solid var(--line);padding:7px 16px;border-radius:6px;
+  transition:all .25s;background:rgba(0,229,255,0.04);
+}
+.nav a:hover{background:rgba(0,229,255,0.15);box-shadow:0 0 14px rgba(0,229,255,0.35);transform:translateY(-2px)}
+
+/* ===== 区块 ===== */
+section{margin-bottom:44px}
+.sec-head{
+  display:flex;align-items:center;gap:12px;margin-bottom:18px;
+}
+.sec-head .tag{
+  color:var(--bg);background:var(--cyan);font-weight:800;font-size:12px;
+  padding:3px 10px;border-radius:4px;letter-spacing:1px;
+}
+.sec-head h2{
+  font-size:20px;color:#eaf6ff;letter-spacing:2px;border-left:3px solid var(--cyan);
+  padding-left:12px;text-shadow:0 0 12px rgba(0,229,255,0.4);
+}
+.sec-head .code{color:var(--dim);font-size:12px;margin-left:auto}
+
+/* ===== 信息卡 ===== */
+.grid{display:grid;gap:16px}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:18px 20px;position:relative;overflow:hidden;
+  transition:transform .25s, box-shadow .25s;
+}
+.card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--cyan),transparent 80%);
+}
+.card:hover{transform:translateY(-4px);box-shadow:0 8px 26px rgba(0,229,255,0.14)}
+.card .k{color:var(--dim);font-size:12px;letter-spacing:2px;text-transform:uppercase}
+.card .v{color:#eaf6ff;font-size:15px;margin-top:6px;font-weight:700}
+.card .v.hot{color:var(--green)}
+.card .v.warn{color:var(--yellow)}
+.card .v.alert{color:var(--magenta)}
+.card .extra{color:var(--dim);font-size:12px;margin-top:5px}
+
+/* ===== 统计条形 ===== */
+.stat-row{display:flex;align-items:center;gap:10px;margin:8px 0}
+.stat-name{width:150px;flex-shrink:0;color:var(--text);font-size:13px;text-align:right}
+.stat-bar-bg{flex:1;height:16px;background:rgba(255,255,255,0.06);border:1px solid var(--line);border-radius:4px;overflow:hidden;position:relative}
+.stat-bar{height:100%;border-radius:3px;position:relative;transition:width 1.2s ease}
+.stat-bar span{position:absolute;right:6px;top:0;font-size:11px;color:#04121f;font-weight:800;line-height:16px}
+.stat-pct{width:52px;color:var(--cyan);font-size:13px;text-align:right}
+
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--panel);border-radius:10px;overflow:hidden}
+th{
+  background:linear-gradient(90deg,rgba(0,229,255,0.16),rgba(176,124,255,0.16));
+  color:#eaf6ff;padding:10px 12px;text-align:left;letter-spacing:1px;border-bottom:1px solid var(--line);
+}
+td{padding:9px 12px;border-bottom:1px solid rgba(30,58,95,0.4);vertical-align:top}
+tr:hover td{background:rgba(0,229,255,0.05)}
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;border:1px solid}
+.pill.cyan{color:var(--cyan);border-color:var(--cyan)}
+.pill.magenta{color:var(--magenta);border-color:var(--magenta)}
+.pill.green{color:var(--green);border-color:var(--green)}
+.pill.yellow{color:var(--yellow);border-color:var(--yellow)}
+.pill.purple{color:var(--purple);border-color:var(--purple)}
+
+/* ===== 卡片网络 ===== */
+.cardnet-note{
+  background:rgba(0,229,255,0.05);border:1px dashed var(--line);border-radius:8px;
+  padding:12px 16px;font-size:12px;color:var(--dim);margin-bottom:18px;
+}
+.kp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.kp-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;
+  transition:all .25s;cursor:pointer;position:relative;
+}
+.kp-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(255,43,214,0.15);border-color:var(--magenta)}
+.kp-card.kp-selected{box-shadow:0 0 0 2px var(--cyan), 0 10px 30px rgba(0,229,255,0.2);border-color:var(--cyan)}
+.kp-head{
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;justify-content:space-between;
+}
+.kp-head .name{color:#eaf6ff;font-weight:800;font-size:14px}
+.kp-head .lv{font-size:11px}
+.kp-body{padding:12px 16px;font-size:12px;color:var(--dim)}
+.kp-body .desc{margin-bottom:8px;color:#9db4cc}
+.kp-body .taglist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.kp-body .tag{font-size:10px;padding:2px 8px;border-radius:12px;border:1px solid var(--line);color:var(--dim)}
+.kp-links{border-top:1px dashed var(--line);padding:9px 16px;font-size:11px;color:var(--dim)}
+.kp-links b{color:var(--cyan);font-weight:700}
+.kp-links .lnk{color:var(--purple);margin-right:8px;cursor:pointer;text-decoration:underline dotted}
+.kp-links .lnk:hover{color:var(--magenta)}
+
+/* 真题卡片 */
+prob-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+.prob-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative;
+  transition:all .25s;cursor:pointer;
+}
+.prob-card:hover{transform:translateY(-4px);box-shadow:0 8px 28px rgba(176,124,255,0.18);border-color:var(--purple)}
+.prob-card.prob-selected{box-shadow:0 0 0 2px var(--magenta), 0 10px 30px rgba(255,43,214,0.2);border-color:var(--magenta)}
+.prob-top{
+  padding:10px 16px;display:flex;align-items:center;gap:10px;justify-content:space-between;
+  background:linear-gradient(90deg,rgba(176,124,255,0.12),transparent);
+  border-bottom:1px solid var(--line);
+}
+.prob-top .year{color:var(--yellow);font-weight:800;font-size:15px}
+.prob-top .no{color:var(--purple);font-weight:800;font-size:13px}
+.prob-top .name{color:#eaf6ff;font-weight:700;font-size:14px;text-align:right}
+.prob-body{padding:12px 16px;font-size:12px;color:var(--dim)}
+.prob-body .point{margin:4px 0;color:#9db4cc}
+.prob-body .point b{color:var(--green);font-weight:700}
+.prob-kp{padding:8px 16px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px}
+.prob-kp .chip{
+  font-size:11px;padding:3px 10px;border-radius:14px;border:1px solid var(--cyan);
+  color:var(--cyan);cursor:pointer;transition:all .2s;
+}
+.prob-kp .chip:hover{background:rgba(0,229,255,0.15)}
+
+/* 关联面板 */
+.link-panel{
+  position:sticky;bottom:0;background:rgba(5,10,20,0.94);border:1px solid var(--cyan);
+  border-radius:10px;padding:14px 18px;margin-top:22px;
+  box-shadow:0 -6px 30px rgba(0,229,255,0.15);display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  backdrop-filter:blur(6px);z-index:10;
+}
+.link-panel .lp-title{color:var(--cyan);font-weight:800;font-size:13px;letter-spacing:1px}
+.link-panel .lp-item{font-size:12px;color:var(--text)}
+.link-panel .arrow{color:var(--magenta);font-weight:900}
+.link-panel .lp-clear{
+  margin-left:auto;color:var(--red);cursor:pointer;font-size:12px;border:1px solid var(--red);
+  padding:4px 12px;border-radius:6px;transition:all .2s;
+}
+.link-panel .lp-clear:hover{background:rgba(255,92,122,0.15)}
+
+/* ===== 策略列表 ===== */
+.strat-list{list-style:none}
+.strat-list li{
+  padding:12px 16px;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;
+  background:var(--panel);font-size:13px;
+}
+.strat-list li b{color:var(--cyan)}
+.strat-list li .tip{color:var(--dim);display:block;margin-top:4px;font-size:12px}
+
+/* ===== 检查清单 ===== */
+.checklist{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.checklist .item{
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:11px 14px;font-size:12px;color:var(--text);
+}
+.checklist .item::before{content:"▸ ";color:var(--green)}
+
+/* ===== 代码块 ===== */
+pre.code{
+  background:#060b16;border:1px solid var(--line);border-radius:8px;
+  padding:16px 18px;overflow-x:auto;font-size:12.5px;line-height:1.7;
+  box-shadow:inset 0 0 30px rgba(0,229,255,0.04);
+}
+pre.code .c-kw{color:var(--magenta);font-weight:700}
+pre.code .c-fn{color:var(--yellow)}
+pre.code .c-ty{color:var(--purple)}
+pre.code .c-st{color:var(--green)}
+pre.code .c-cm{color:var(--dim);font-style:italic}
+pre.code .c-num{color:var(--cyan)}
+
+/* ===== 页脚 ===== */
+footer{
+  margin-top:60px;padding-top:20px;border-top:1px solid var(--line);
+  text-align:center;color:var(--dim);font-size:12px;letter-spacing:2px;
+}
+.tagline{color:var(--cyan);margin-top:8px;font-size:13px}
+
+@media(max-width:700px){
+  .stat-name{width:104px;font-size:11px}
+  .grid-2{grid-template-columns:1fr}
+  .term-body{padding:14px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 终端头部 ===== -->
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">csp-s-2026-ops — root@online-judge:~/review</span>
+    </div>
+    <div class="term-body">
+      <div class="type-line"><span class="prompt">user@oj:~$</span> <span class="cmd">init --system csp-s-2026 --module round2</span></div>
+      <div class="type-line" style="margin-top:8px"><span class="prompt">[boot]</span> 加载考点知识库 <span style="color:var(--cyan)">OK</span>  ·  真题语料 2019-2025 <span style="color:var(--cyan)">OK</span>  ·  预测引擎 <span style="color:var(--cyan)">OK</span></div>
+      <div class="type-line" style="margin-top:4px"><span class="prompt">[info]</span> 剩余天数 <span style="color:var(--yellow)">29</span> 天 · 考试模式 <span style="color:var(--magenta)">REAL-TIME CODING</span> · 目标 <span style="color:var(--green)">AC × 4</span></div>
+      <div class="type-line" style="margin-top:4px"><span class="prompt">user@oj:~$</span> <span class="cmd">start --attack-plan</span><span class="cursor"></span></div>
+    </div>
+  </div>
+
+  <!-- ===== 标题 ===== -->
+  <div class="hero">
+    <h1>CSP-S 2026 · 第二轮考点作战系统</h1>
+    <div class="sub">// ALGORITHM KNOWLEDGE GRID · 2019-2025 真题数据驱动 //</div>
+  </div>
+
+  <!-- ===== 导航 ===== -->
+  <nav class="nav">
+    <a href="#info">考试关键信息</a>
+    <a href="#stat">历年知识点分布</a>
+    <a href="#predict">2026 考点预测</a>
+    <a href="#strategy">备考策略</a>
+    <a href="#knowledge">知识点卡片</a>
+    <a href="#problems">真题题目卡片</a>
+  </nav>
+
+  <!-- ===== 1 考试关键信息 ===== -->
+  <section id="info">
+    <div class="sec-head"><span class="tag">INFO</span><h2>考试关键信息</h2><span class="code">// mission_brief</span></div>
+    <div class="grid grid-4">
+      <div class="card"><div class="k">DATE</div><div class="v hot">2026-10-31（周六）</div><div class="extra">距离开考 29 天</div></div>
+      <div class="card"><div class="k">TIME</div><div class="v hot">14:30 — 18:30</div><div class="extra">共 4 小时 · 下午场</div></div>
+      <div class="card"><div class="k">PROBLEMS</div><div class="v hot">4 道编程题</div><div class="extra">T1-T4 难度梯度递进</div></div>
+      <div class="card"><div class="k">ENV</div><div class="v">NOI Linux 2.0</div><div class="extra">C++（部分地区支持 Python）</div></div>
+      <div class="card"><div class="k">SCORE</div><div class="v warn">总分 400</div><div class="extra">每题 100 分 · 部分分梯度设置</div></div>
+      <div class="card"><div class="k">ROUTINE</div><div class="v">freopen 文件读写</div><div class="extra">in/out 文件名必须与题目一致</div></div>
+      <div class="card"><div class="k">CHECK-IN</div><div class="v warn">开考 15 分钟后禁止入场</div><div class="extra">建议提前 1 小时到达考点</div></div>
+      <div class="card"><div class="k">FOLDER</div><div class="v alert">目录名 = 准考证号</div><div class="extra">每题独立子目录 · 只提交源代码</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 2 历年知识点分布统计 ===== -->
+  <section id="stat">
+    <div class="sec-head"><span class="tag">STATS</span><h2>历年（2019-2025）真题知识点分布统计</h2><span class="code">// 7-year_analysis</span></div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="k">KNOWLEDGE_FREQUENCY — 按 30 题归一化出现比例</div>
+        <div style="margin-top:10px">
+          <div class="stat-row"><span class="stat-name">动态规划 DP</span><div class="stat-bar-bg"><div class="stat-bar" style="width:46.7%;background:linear-gradient(90deg,#00e5ff,#b07cff)"><span>14</span></div></div><span class="stat-pct">46.7%</span></div>
+          <div class="stat-row"><span class="stat-name">贪心</span><div class="stat-bar-bg"><div class="stat-bar" style="width:40%;background:linear-gradient(90deg,#3dff9a,#00e5ff)"><span>12</span></div></div><span class="stat-pct">40.0%</span></div>
+          <div class="stat-row"><span class="stat-name">图论（不含树）</span><div class="stat-bar-bg"><div class="stat-bar" style="width:30%;background:linear-gradient(90deg,#ff2bd6,#b07cff)"><span>9</span></div></div><span class="stat-pct">30.0%</span></div>
+          <div class="stat-row"><span class="stat-name">树（重心/DFS）</span><div class="stat-bar-bg"><div class="stat-bar" style="width:26.7%;background:linear-gradient(90deg,#ffe66d,#ff2bd6)"><span>8</span></div></div><span class="stat-pct">26.7%</span></div>
+          <div class="stat-row"><span class="stat-name">模拟（含大模拟）</span><div class="stat-bar-bg"><div class="stat-bar" style="width:23.3%;background:linear-gradient(90deg,#00e5ff,#3dff9a)"><span>7</span></div></div><span class="stat-pct">23.3%</span></div>
+          <div class="stat-row"><span class="stat-name">数学 / 组合数学</span><div class="stat-bar-bg"><div class="stat-bar" style="width:20%;background:linear-gradient(90deg,#b07cff,#ff2bd6)"><span>6</span></div></div><span class="stat-pct">20.0%</span></div>
+          <div class="stat-row"><span class="stat-name">数据结构（栈/队列）</span><div class="stat-bar-bg"><div class="stat-bar" style="width:16.7%;background:linear-gradient(90deg,#3dff9a,#ffe66d)"><span>5</span></div></div><span class="stat-pct">16.7%</span></div>
+          <div class="stat-row"><span class="stat-name">位运算</span><div class="stat-bar-bg"><div class="stat-bar" style="width:13.3%;background:linear-gradient(90deg,#ff5c7a,#ff2bd6)"><span>4</span></div></div><span class="stat-pct">13.3%</span></div>
+          <div class="stat-row"><span class="stat-name">字符串（含哈希）</span><div class="stat-bar-bg"><div class="stat-bar" style="width:13.3%;background:linear-gradient(90deg,#ffe66d,#00e5ff)"><span>4</span></div></div><span class="stat-pct">13.3%</span></div>
+          <div class="stat-row"><span class="stat-name">搜索（BFS/DFS）</span><div class="stat-bar-bg"><div class="stat-bar" style="width:10%;background:linear-gradient(90deg,#b07cff,#3dff9a)"><span>3</span></div></div><span class="stat-pct">10.0%</span></div>
+          <div class="stat-row"><span class="stat-name">构造</span><div class="stat-bar-bg"><div class="stat-bar" style="width:6.7%;background:linear-gradient(90deg,#ff2bd6,#ff5c7a)"><span>2</span></div></div><span class="stat-pct">6.7%</span></div>
+          <div class="stat-row"><span class="stat-name">博弈</span><div class="stat-bar-bg"><div class="stat-bar" style="width:6.7%;background:linear-gradient(90deg,#00e5ff,#b07cff)"><span>2</span></div></div><span class="stat-pct">6.7%</span></div>
+          <div class="stat-row"><span class="stat-name">网络流</span><div class="stat-bar-bg"><div class="stat-bar" style="width:3.3%;background:linear-gradient(90deg,#ffe66d,#ff5c7a)"><span>1</span></div></div><span class="stat-pct">3.3%</span></div>
+        </div>
+        <div class="extra" style="margin-top:8px">注：部分题目融合多个知识点，总和超过 30 题、百分比总和超过 100%。</div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="k">板块构成 — CSP-S 2025 实测</div>
+          <table style="margin-top:10px">
+            <tr><th>板块</th><th>知识点数</th><th>占比趋势</th></tr>
+            <tr><td>算法</td><td>17</td><td><span class="pill cyan">核心主战场</span></td></tr>
+            <tr><td>数据结构</td><td>6</td><td><span class="pill purple">中高频</span></td></tr>
+            <tr><td>C++ 程序设计</td><td>8</td><td><span class="pill green">基础托底</span></td></tr>
+            <tr><td>数学与其他</td><td>5</td><td><span class="pill yellow">思维提升</span></td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="k">趋势研判 — 7 年递进</div>
+          <ul class="strat-list">
+            <li><b>DP 统治地位稳固</b><span class="tip">占比稳定在 40%+，每年至少两道 DP；难度从区间/树形进阶到单调队列、矩阵快速幂、状态压缩优化。</span></li>
+            <li><b>字符串哈希成新热点</b><span class="tip">2022-2025 反复出现（消消乐、谐音替换），哈希、Trie、KMP 组合登场。</span></li>
+            <li><b>贪心进入进阶形态</b><span class="tip">2024-2025 连续出现"后悔贪心"（反悔堆），常与排序、数据结构结合。</span></li>
+            <li><b>难度系数上移</b><span class="tip">2025 年 6 级难度知识点最多，部分知识点达 7-8 级（状态压缩 DP、扫描线、容斥原理）。</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3 2026 考点预测 ===== -->
+  <section id="predict">
+    <div class="sec-head"><span class="tag">PREDICT</span><h2>2026 考点预测与命题方向</h2><span class="code">// forecast_model_v2026</span></div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="k">T1 送分题 · 保底 100 分</div>
+        <table style="margin-top:10px">
+          <tr><th>预测方向</th><th>依据 / 真题规律</th><th>命中率</th></tr>
+          <tr><td>模拟 / 大模拟</td><td>儒略日、结构体等稳定出现在 T1/T3</td><td><span class="pill green">极高</span></td></tr>
+          <tr><td>贪心 + 排序</td><td>2025 club（社团招新）贪心 + 计数排序</td><td><span class="pill green">极高</span></td></tr>
+          <tr><td>位运算 / 集合</td><td>动物园、优秀拆分类模型</td><td><span class="pill cyan">高</span></td></tr>
+          <tr><td>基础枚举 / 递推</td><td>入门算法模块稳定覆盖</td><td><span class="pill cyan">高</span></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="k">T2 基础题 · 稳定拿分</div>
+        <table style="margin-top:10px">
+          <tr><th>预测方向</th><th>依据 / 真题规律</th><th>命中率</th></tr>
+          <tr><td>二分答案</td><td>超速检测：物理建模 + 二分 + 贪心</td><td><span class="pill green">极高</span></td></tr>
+          <tr><td>区间 DP 计数</td><td>括号序列（2021）高难度区间 DP</td><td><span class="pill cyan">高</span></td></tr>
+          <tr><td>MST + 子集枚举</td><td>道路修复（2025）：先 MST 再枚举</td><td><span class="pill cyan">高</span></td></tr>
+          <tr><td>数学建模 / 分类讨论</td><td>策略游戏：ST 表 / 线段树区间最值</td><td><span class="pill yellow">中高</span></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="k">T3 分层题 · 区分度核心</div>
+        <table style="margin-top:10px">
+          <tr><th>预测方向</th><th>依据 / 真题规律</th><th>命中率</th></tr>
+          <tr><td>DP + 优化技巧</td><td>染色：全局标记 / 线段树优化 O(n²)→O(n)</td><td><span class="pill green">极高</span></td></tr>
+          <tr><td>字符串（哈希/Trie/KMP）</td><td>谐音替换：Trie + 树状数组 + 扫描线</td><td><span class="pill green">极高</span></td></tr>
+          <tr><td>图论进阶（拓扑/最短路变体）</td><td>函数调用：拓扑 + 贡献传递</td><td><span class="pill cyan">高</span></td></tr>
+          <tr><td>随机化 / 哈希维护状态</td><td>星战：随机权值哈希维护图状态</td><td><span class="pill yellow">中</span></td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="k">T4 压轴题 · 冲刺高分</div>
+        <table style="margin-top:10px">
+          <tr><th>预测方向</th><th>依据 / 真题规律</th><th>命中率</th></tr>
+          <tr><td>树形 DP / 树上问题</td><td>括号树、树的重心连续考察</td><td><span class="pill cyan">高</span></td></tr>
+          <tr><td>状压 DP / 计数 DP</td><td>Emiya 家今天的饭：容斥 + DP；n≤20 集合问题</td><td><span class="pill cyan">高</span></td></tr>
+          <tr><td>DP 优化（单调队列/矩阵快速幂）</td><td>高阶优化成为高分关键</td><td><span class="pill cyan">高</span></td></tr>
+          <tr><td>数据结构 + 思维综合</td><td>线段树、平衡树、树链剖分综合应用</td><td><span class="pill yellow">中</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="k">PROBABILITY MATRIX — 2026 必考 / 高概率知识矩阵</div>
+      <table style="margin-top:10px">
+        <tr><th>优先级</th><th>知识点</th><th>说明</th></tr>
+        <tr><td><span class="pill magenta">S · 必考</span></td><td>动态规划（区间 / 树形 / 状压 / 计数 + 优化）</td><td>每年至少 2 题，占比 40%+，优化技巧直接决定分数上限</td></tr>
+        <tr><td><span class="pill magenta">S · 必考</span></td><td>贪心（含后悔贪心 / 排序贪心）</td><td>7 年出现 12 次，2024-2025 连续出现进阶形式</td></tr>
+        <tr><td><span class="pill cyan">A · 高概率</span></td><td>字符串（哈希 / Trie / KMP）</td><td>2022-2025 反复出现，已成新热点</td></tr>
+        <tr><td><span class="pill cyan">A · 高概率</span></td><td>图论 / 树（最短路 / 拓扑 / MST / 树上 DP）</td><td>中高难度题常见载体，模板必须熟练</td></tr>
+        <tr><td><span class="pill cyan">A · 高概率</span></td><td>数据结构（栈 / 线段树 / 优先队列 / 并查集）</td><td>栈匹配 + 线段树优化 DP 两大经典组合</td></tr>
+        <tr><td><span class="pill yellow">B · 中概率</span></td><td>模拟（含大模拟） / 二分答案 / 数学组合 / 位运算</td><td>T1/T2 稳定得分来源，也是部分分保障</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== 4 备考策略 ===== -->
+  <section id="strategy">
+    <div class="sec-head"><span class="tag">STRATEGY</span><h2>备考策略 · 29 天冲刺路线</h2><span class="code">// sprint_plan</span></div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="k">四阶段冲刺（按周拆解）</div>
+        <ul class="strat-list" style="margin-top:10px">
+          <li><b>阶段一 · 基础模板速成（7 天）</b><span class="tip">链式前向星、Dijkstra、单调栈/队列、Tarjan 缩点、匈牙利、KMP、字符串哈希、Trie、凸包模板 20 分钟无 bug 打完。</span></li>
+          <li><b>阶段二 · 综合训练（8 天）</b><span class="tip">图论综合（最短路+Tarjan+匹配）、DP 综合（区间/树形/单调队列优化）、字符串综合（KMP+哈希+后缀数组）、数学（高斯消元/矩阵快速幂）。</span></li>
+          <li><b>阶段三 · 模拟实战（8 天）</b><span class="tip">每天一套 2019-2022 真题 + 高质量模拟赛题单；重点练 T3 拿部分分策略（暴力分、剪枝）。</span></li>
+          <li><b>阶段四 · 总复习（考前 7 天）</b><span class="tip">查漏补缺 + 模板背诵 + 默写 freopen/BFS/DP 模板保持手感 + 复盘 WA 错题 + 心态调整。</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="k">考场实战策略</div>
+        <ul class="strat-list" style="margin-top:10px">
+          <li><b>时间分配</b><span class="tip">第 1 小时通读 4 题，先攻最简单题保底分；第 2-3 小时突破中等题；剩余时间写暴力部分分 + 全面检查。</span></li>
+          <li><b>部分分技巧</b><span class="tip">完全不会的压轴题：小数据范围枚举/DFS 暴力、特殊边界针对性代码，可拿 30%-60% 测试点分。</span></li>
+          <li><b>T2 目标</b><span class="tip">40-60 分钟内稳定满分或接近满分：二分答案、贪心、区间 DP 三类练透。</span></li>
+          <li><b>T3 策略</b><span class="tip">先快速拿暴力分（通常 40-60 分），再判断剩余时间能否完成正解；正解需要没练过的结构就保住暴力分。</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="k">防爆零检查清单 · CHECKLIST</div>
+      <div class="checklist" style="margin-top:12px">
+        <div class="item">根文件夹名称必须与准考证号完全一致</div>
+        <div class="item">每题的文件夹名、源代码文件名与题目英文名完全匹配</div>
+        <div class="item">确认 freopen 未被注释，能正常读写 .in / .out</div>
+        <div class="item">提交前删除所有调试代码，只保留源文件</div>
+        <div class="item">多组数据测试后重置全局变量与数组</div>
+        <div class="item">严格控制循环边界，避免数组越界</div>
+        <div class="item">1e8 以上操作必然超时，勿用 O(n²) 处理大数据量</div>
+        <div class="item">输出格式严格匹配，不多写 / 不漏空格换行</div>
+        <div class="item">提前 1 小时到考点，开考 15 分钟后禁止入场</div>
+        <div class="item">带齐证件：身份证件 + 准考证 + 学校证明</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="k">模板速记 · CORE TEMPLATES</div>
+      <pre class="code" style="margin-top:10px"><span class="c-cm">// 核心模板：读入输出 + 二分答案三板斧 + 01 背包</span>
+<span class="c-kw">#include</span> &lt;bits/stdc++.h&gt;
+<span class="c-kw">using namespace</span> std;
+<span class="c-ty">int</span> n, m;
+
+<span class="c-cm">// 1. 文件读写（必须）</span>
+<span class="c-ty">int</span> <span class="c-fn">main</span>() {
+    freopen(<span class="c-st">"problem.in"</span>, <span class="c-st">"r"</span>, stdin);
+    freopen(<span class="c-st">"problem.out"</span>, <span class="c-st">"w"</span>, stdout);
+
+    <span class="c-cm">// 2. 二分答案：确定 check(mid) 含义 → 证明单调性 → 处理边界</span>
+    <span class="c-ty">int</span> l = <span class="c-num">0</span>, r = <span class="c-num">1e9</span>, ans = <span class="c-num">0</span>;
+    <span class="c-kw">while</span> (l &lt;= r) {
+        <span class="c-ty">int</span> mid = (l + r) &gt;&gt; <span class="c-num">1</span>;
+        <span class="c-kw">if</span> (<span class="c-fn">check</span>(mid)) ans = mid, l = mid + <span class="c-num">1</span>;
+        <span class="c-kw">else</span> r = mid - <span class="c-num">1</span>;
+    }
+
+    <span class="c-cm">// 3. 01 背包：每个数及其和不大时识别为背包</span>
+    <span class="c-ty">int</span> w[<span class="c-num">105</span>], v[<span class="c-num">105</span>], dp[<span class="c-num">10005</span>];
+    <span class="c-kw">for</span> (<span class="c-ty">int</span> i = <span class="c-num">1</span>; i &lt;= n; ++i)
+        <span class="c-kw">for</span> (<span class="c-ty">int</span> j = m; j &gt;= w[i]; --j)
+            dp[j] = max(dp[j], dp[j - w[i]] + v[i]);
+    <span class="c-kw">return</span> <span class="c-num">0</span>;
+}</pre>
+    </div>
+  </section>
+
+  <!-- ===== 5 知识点卡片 ===== -->
+  <section id="knowledge">
+    <div class="sec-head"><span class="tag">KNOWLEDGE</span><h2>知识点卡片</h2><span class="code">// knowledge_base · 12 modules</span></div>
+    <div class="cardnet-note">点击知识点卡片可高亮关联的真题卡片；点击真题卡片内的知识点标签可反向高亮该知识点。系统支持 <b style="color:var(--cyan)">双向关联联动</b>。</div>
+    <div class="kp-grid" id="kpGrid"></div>
+  </section>
+
+  <!-- ===== 6 真题题目卡片 ===== -->
+  <section id="problems">
+    <div class="sec-head"><span class="tag">PROBLEMS</span><h2>历年真题题目卡片</h2><span class="code">// problem_bank · 2019-2025</span></div>
+    <div class="cardnet-note">真题卡片展示年份、题号、考点标签；点击卡片右上角链接可查看对应知识点卡片的详细信息。</div>
+    <div class="kp-grid" id="probGrid" style="grid-template-columns:repeat(auto-fill,minmax(360px,1fr))"></div>
+  </section>
+
+  <!-- ===== 关联面板 ===== -->
+  <div class="link-panel" id="linkPanel">
+    <span class="lp-title">LINK TRACE</span>
+    <span class="lp-item" id="lpFrom">未选择来源</span>
+    <span class="arrow">⟶</span>
+    <span class="lp-item" id="lpTo">未选择目标</span>
+    <span class="lp-clear" onclick="clearLink()">CLEAR [ESC]</span>
+  </div>
+
+  <footer>
+    <div>GENERATED BY CSP-S 2026 REVIEW GRID · 数据来源：CCF 官方分析报告 / 新东方优编程 / 四季读书网 / CSDN / 洛谷</div>
+    <div class="tagline">// MAY THE AC BE WITH YOU · 2026-10-31 14:30 READY</div>
+  </footer>
+</div>
+
+<script>
+/* ================= 数据层 ================= */
+const KNOWLEDGE = [
+  {id:"kp-dp", name:"动态规划 DP", lv:"S · 必考", color:"cyan", desc:"近七年每年至少两道 DP，占比 46.7%，CSP-S 灵魂考点。2025 年难度系数集中在 4-8 级，优化技巧成为高分关键。",
+   tags:["区间DP","树形DP","状压DP","计数DP","单调队列优化","矩阵快速幂优化","背包DP","线性DP"],
+   links:["p2019-1","p2019-2","p2020-1","p2020-2","p2021-1","p2021-2","p2022-1","p2022-2","p2023-1","p2023-2","p2024-1","p2025-1"]},
+  {id:"kp-greedy", name:"贪心", lv:"S · 必考", color:"green", desc:"7 年出现 12 次（40%），T1-T4 各位置均有出现。常与排序、数据结构、博弈结合；2024-2025 连续出现后悔贪心进阶形式。",
+   tags:["排序贪心","后悔贪心/反悔堆","区间覆盖","Huffman","贪心证明(交换邻项)"],
+   links:["p2019-1","p2019-3","p2020-1","p2021-2","p2022-1","p2023-1","p2024-1","p2024-3","p2025-1"]},
+  {id:"kp-graph", name:"图论（不含树）", lv:"A · 高概率", color:"purple", desc:"占比 30%。覆盖 BFS/最短路、拓扑排序、哈希判环；2025 道路修复考 MST + 子集枚举，函数调用考拓扑 + 贡献传递。",
+   tags:["最短路Dijkstra","堆优化","拓扑排序","并查集","最小生成树","强连通分量","二分图匹配"],
+   links:["p2020-2","p2021-1","p2021-3","p2022-3","p2024-2","p2025-2"]},
+  {id:"kp-tree", name:"树（重心/DFS）", lv:"A · 高概率", color:"yellow", desc:"占比 26.7%。集中在树的重心、括号树、树上 DP、DFS 序与欧拉序。中高难度题的常见载体。",
+   tags:["树的重心","树上DP","DFS序/欧拉序","LCA","括号树"],
+   links:["p2019-1","p2020-1","p2020-3","p2021-1","p2023-2"]},
+  {id:"kp-sim", name:"模拟（含大模拟）", lv:"A · 高概率", color:"green", desc:"占比 23.3%。大模拟（儒略日、结构体）通常出现在 T1/T3，考查代码实现与调试能力，是稳定得分的基础。",
+   tags:["大模拟","结构体模拟","日期模拟","状态机"],
+   links:["p2019-2","p2020-2","p2023-1"]},
+  {id:"kp-math", name:"数学 / 组合数学", lv:"A · 高概率", color:"cyan", desc:"占比 20%。包括位运算、容斥原理、组合计数、二分答案、矩阵快速幂、高斯消元等，常与 DP 或贪心结合提升思维难度。",
+   tags:["组合计数","容斥原理","矩阵快速幂","高斯消元","欧拉函数","乘法原理","排列组合"],
+   links:["p2020-3","p2021-2","p2022-1","p2023-2","p2024-3","p2025-4"]},
+  {id:"kp-ds", name:"数据结构（栈/队列）", lv:"A · 高概率", color:"purple", desc:"占比 16.7%。栈在括号匹配频繁出现；线段树优化 DP；优先队列、双端队列在构造类问题中发挥作用。",
+   tags:["栈","单调栈","线段树","树状数组","优先队列","双端队列","平衡树"],
+   links:["p2020-2","p2021-2","p2022-1","p2024-1","p2025-3"]},
+  {id:"kp-bit", name:"位运算", lv:"B · 中概率", color:"yellow", desc:"占比 13.3%。常见于 T1/T2 的集合建模：优秀拆分、动物园位运算 + 集合。n & (n-1) 判 2 的幂等技巧高频。",
+   tags:["二进制状态","集合表示","位运算技巧","快速幂"],
+   links:["p2022-2","p2023-1"]},
+  {id:"kp-string", name:"字符串（含哈希）", lv:"A · 高概率", color:"magenta", desc:"占比 13.3%，但 2022-2025 反复出现已成新热门。哈希用于消消乐、谐音替换；Trie、KMP、AC 自动机、后缀数组组合登场。",
+   tags:["字符串哈希","KMP","Trie字典树","AC自动机","后缀数组"],
+   links:["p2022-1","p2023-3","p2024-2","p2025-3"]},
+  {id:"kp-search", name:"搜索（BFS/DFS）", lv:"B · 中概率", color:"green", desc:"占比 10%。暴力拿部分分的救命通道：暴力 → 记忆化 → 剪枝；BFS/DFS 序、迭代加深、双向广搜、连通块染色。",
+   tags:["DFS","BFS","记忆化搜索","剪枝","Flood Fill"],
+   links:["p2019-2","p2020-1","p2025-4"]},
+  {id:"kp-construct", name:"构造", lv:"C · 低概率", color:"cyan", desc:"占比 6.7%。构造类问题要求极强的思维发散能力，常结合贪心与单调栈思想，如最小字典序构造。",
+   tags:["构造","字典序最小","贪心构造"],
+   links:["p2021-2","p2021-3"]},
+  {id:"kp-game", name:"博弈", lv:"C · 低概率", color:"yellow", desc:"占比 6.7%。与贪心、数据结构结合，考查对最优策略的抽象；SG 函数、博弈 DP 为进阶形态。",
+   tags:["博弈DP","SG函数","minimax"],
+   links:["p2021-2","p2024-2"]}
+];
+
+const PROBLEMS = [
+  {id:"p2019-1", year:"2019", no:"T1", name:"格雷码", kp:["动态规划 DP","贪心"], kpIds:["kp-dp","kp-greedy"], point:"位运算 + 递推构造；格雷码生成与还原，考查二进制与递归建模。"},
+  {id:"p2019-2", year:"2019", no:"T2", name:"括号树", kp:["动态规划 DP","树（重心/DFS）","搜索（BFS/DFS）","模拟（含大模拟）"], kpIds:["kp-dp","kp-tree","kp-search","kp-sim"], point:"树上合法括号序列计数，树形 DP 经典应用；DFS 维护前缀和。"},
+  {id:"p2019-3", year:"2019", no:"T3", name:"树上的数", kp:["贪心","构造"], kpIds:["kp-greedy","kp-construct"], point:"树上贪心 + 构造；高难度思维题，考查排列与交换的深刻理解。"},
+  {id:"p2020-1", year:"2020", no:"T1", name:"儒略日", kp:["模拟（含大模拟）","动态规划 DP","树（重心/DFS）","搜索（BFS/DFS）"], kpIds:["kp-sim","kp-dp","kp-tree","kp-search"], point:"史上著名大模拟，日期推演 + 二分答案；实现精度是最大敌人。"},
+  {id:"p2020-2", year:"2020", no:"T2", name:"动物园", kp:["位运算","模拟（含大模拟）","图论（不含树）","数据结构（栈/队列）"], kpIds:["kp-bit","kp-sim","kp-graph","kp-ds"], point:"位运算 + 集合建模；注意 2^64 溢出坑点，逐位统计。"},
+  {id:"p2020-3", year:"2020", no:"T3", name:"函数调用", kp:["图论（不含树）","数学 / 组合数学"], kpIds:["kp-graph","kp-math"], point:"拓扑排序 + 贡献传递；把调用图建成 DAG 后倒序处理乘法标记。"},
+  {id:"p2021-1", year:"2021", no:"T1", name:"廊桥分配", kp:["贪心","图论（不含树）","树（重心/DFS）","动态规划 DP"], kpIds:["kp-greedy","kp-graph","kp-tree","kp-dp"], point:"贪心 + 优先队列模拟；先求每个廊桥数量对应的最大航班数，再合并。"},
+  {id:"p2021-2", year:"2021", no:"T2", name:"括号序列", kp:["动态规划 DP","贪心","数学 / 组合数学","数据结构（栈/队列）","构造","博弈"], kpIds:["kp-dp","kp-greedy","kp-math","kp-ds","kp-construct","kp-game"], point:"高难度区间 DP 计数；状态设计复杂、细节多，T2 中少见的高难度题。"},
+  {id:"p2021-3", year:"2021", no:"T3", name:"回文", kp:["图论（不含树）","构造"], kpIds:["kp-graph","kp-construct"], point:"贪心 + 构造；双端取数构造回文，考查两指针思维。"},
+  {id:"p2022-1", year:"2022", no:"T1", name:"假期计划", kp:["动态规划 DP","贪心","数据结构（栈/队列）","字符串（含哈希）"], kpIds:["kp-dp","kp-greedy","kp-ds","kp-string"], point:"图论 + DP 综合：预处理每个点距离 ≤ k 的可达点集，再枚举中点。"},
+  {id:"p2022-2", year:"2022", no:"T2", name:"策略游戏", kp:["位运算","动态规划 DP"], kpIds:["kp-bit","kp-dp"], point:"分类讨论 + ST 表/线段树区间最值；两数组取数博弈，注意正负分情况。"},
+  {id:"p2022-3", year:"2022", no:"T3", name:"星战", kp:["图论（不含树）","字符串（含哈希）"], kpIds:["kp-graph","kp-string"], point:"随机权值哈希维护图的状态；判定每个点出度为 1 的可逆操作。"},
+  {id:"p2023-1", year:"2023", no:"T1", name:"密码锁", kp:["模拟（含大模拟）","数据结构（栈/队列）","贪心","位运算"], kpIds:["kp-sim","kp-ds","kp-greedy","kp-bit"], point:"暴力枚举 + 模拟校验；限制条件拆解后对状态空间剪枝。"},
+  {id:"p2023-2", year:"2023", no:"T2", name:"消消乐", kp:["动态规划 DP","数学 / 组合数学","树（重心/DFS）","字符串（含哈希）"], kpIds:["kp-dp","kp-math","kp-tree","kp-string"], point:"栈 + 哈希维护前缀状态；字符串哈希新热点的代表题。"},
+  {id:"p2023-3", year:"2023", no:"T3", name:"结构体", kp:["模拟（含大模拟）","字符串（含哈希）"], kpIds:["kp-sim","kp-string"], point:"大模拟：结构体定义、地址计算、递归展开；实现量大、一处写错全题出错。"},
+  {id:"p2024-1", year:"2024", no:"T1", name:"超速检测", kp:["贪心","动态规划 DP","数据结构（栈/队列）"], kpIds:["kp-greedy","kp-dp","kp-ds"], point:"物理建模 + 二分 + 贪心：先转区间，再求最少保留测速仪使每区间有覆盖。"},
+  {id:"p2024-2", year:"2024", no:"T2", name:"染色", kp:["动态规划 DP","图论（不含树）","字符串（含哈希）","博弈"], kpIds:["kp-dp","kp-graph","kp-string","kp-game"], point:"DP + 全局标记/线段树优化：O(n²) 直转移必 T，需优化到线性。"},
+  {id:"p2024-3", year:"2024", no:"T3", name:"黑客", kp:["贪心","数学 / 组合数学"], kpIds:["kp-greedy","kp-math"], point:"数论 + 贪心：公约数性质 + 集合操作；快速幂与边界判断。"},
+  {id:"p2025-1", year:"2025", no:"T1", name:"社团招新", kp:["贪心","动态规划 DP"], kpIds:["kp-greedy","kp-dp"], point:"贪心 + 排序（计数排序/快速排序）；标准解法难度系数最高 5 级，梯度良好。"},
+  {id:"p2025-2", year:"2025", no:"T2", name:"道路修复", kp:["图论（不含树）"], kpIds:["kp-graph"], point:"MST + 子集枚举：k≤10 提示枚举乡镇子集，先求原图 MST 只保留 n-1 条边。"},
+  {id:"p2025-3", year:"2025", no:"T3", name:"谐音替换", kp:["字符串（含哈希）","数据结构（栈/队列）"], kpIds:["kp-string","kp-ds"], point:"公共前缀+替换段+公共后缀 → Trie 上二维数点 + 树状数组 + 扫描线；暴力仅部分分。"},
+  {id:"p2025-4", year:"2025", no:"T4", name:"员工招聘", kp:["数学 / 组合数学","搜索（BFS/DFS）"], kpIds:["kp-math","kp-search"], point:"容斥原理 + 组合计数综合压轴；乘法原理、排列组合、等价类思维。"}
+];
+
+/* ================= 渲染 ================= */
+const kpGrid = document.getElementById('kpGrid');
+const probGrid = document.getElementById('probGrid');
+const linkPanel = document.getElementById('linkPanel');
+let linkFrom = null; // {type, id, label}
+
+function renderKnowledge(){
+  kpGrid.innerHTML = KNOWLEDGE.map(k => `
+    <div class="kp-card" id="${k.id}" onclick="selectKP('${k.id}')">
+      <div class="kp-head">
+        <span class="name">${k.name}</span>
+        <span class="pill ${k.color} lv">${k.lv}</span>
+      </div>
+      <div class="kp-body">
+        <div class="desc">${k.desc}</div>
+        <div class="taglist">${k.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="kp-links">关联真题：${k.links.map(id=>{
+        const p = PROBLEMS.find(x=>x.id===id);
+        return `<span class="lnk" data-prob="${id}" onclick="event.stopPropagation();selectProb('${id}')">${p?p.year+' '+p.no:''}</span>`;
+      }).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function renderProblems(){
+  probGrid.innerHTML = PROBLEMS.map(p => `
+    <div class="prob-card" id="${p.id}" onclick="selectProb('${p.id}')">
+      <div class="prob-top">
+        <span class="year">${p.year}</span>
+        <span class="no">${p.no}</span>
+        <span class="name">${p.name}</span>
+      </div>
+      <div class="prob-body">
+        <div class="point"><b>要点：</b>${p.point}</div>
+        <div class="point"><b>涉及：</b>${p.kp.join(' / ')}</div>
+      </div>
+      <div class="prob-kp">${p.kpIds.map(id=>{
+        const k = KNOWLEDGE.find(x=>x.id===id);
+        return `<span class="chip" data-kp="${id}" onclick="event.stopPropagation();selectKP('${id}')">${k?k.name:''}</span>`;
+      }).join('')}</div>
+    </div>
+  `).join('');
+}
+
+/* ================= 联动 ================= */
+function clearLink(){
+  linkFrom = null;
+  document.querySelectorAll('.kp-selected,.prob-selected').forEach(el=>el.classList.remove('kp-selected','prob-selected'));
+  document.getElementById('lpFrom').textContent = '未选择来源';
+  document.getElementById('lpTo').textContent = '未选择目标';
+  linkPanel.style.borderColor = 'var(--cyan)';
+}
+
+function setPanel(from, to){
+  document.getElementById('lpFrom').textContent = from;
+  document.getElementById('lpTo').textContent = to;
+}
+
+function selectKP(id){
+  const card = document.getElementById(id);
+  const isSel = card.classList.contains('kp-selected');
+  document.querySelectorAll('.kp-selected').forEach(el=>el.classList.remove('kp-selected'));
+  document.querySelectorAll('.prob-selected').forEach(el=>el.classList.remove('prob-selected'));
+  if(isSel){ clearLink(); return; }
+  card.classList.add('kp-selected');
+  const k = KNOWLEDGE.find(x=>x.id===id);
+  k.links.forEach(pid=>{ const el=document.getElementById(pid); if(el) el.classList.add('prob-selected'); });
+  if(linkFrom && linkFrom.type==='prob'){
+    setPanel(linkFrom.label, '知识点：'+k.name);
+    linkFrom = {type:'kp', id, label:'知识点：'+k.name};
+  } else {
+    setPanel('知识点：'+k.name, '已高亮 ' + k.links.length + ' 道真题');
+    linkFrom = {type:'kp', id, label:'知识点：'+k.name};
+  }
+}
+
+function selectProb(id){
+  const card = document.getElementById(id);
+  const isSel = card.classList.contains('prob-selected');
+  document.querySelectorAll('.kp-selected').forEach(el=>el.classList.remove('kp-selected'));
+  document.querySelectorAll('.prob-selected').forEach(el=>el.classList.remove('prob-selected'));
+  if(isSel){ clearLink(); return; }
+  card.classList.add('prob-selected');
+  const p = PROBLEMS.find(x=>x.id===id);
+  p.kpIds.forEach(kid=>{ const el=document.getElementById(kid); if(el) el.classList.add('kp-selected'); });
+  if(linkFrom && linkFrom.type==='kp'){
+    setPanel(linkFrom.label, '真题：'+p.year+' '+p.no+' '+p.name);
+    linkFrom = {type:'prob', id, label:'真题：'+p.year+' '+p.no+' '+p.name};
+  } else {
+    setPanel('真题：'+p.year+' '+p.no+' '+p.name, '已高亮 ' + p.kpIds.length + ' 个知识点');
+    linkFrom = {type:'prob', id, label:'真题：'+p.year+' '+p.no+' '+p.name};
+  }
+}
+
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') clearLink(); });
+
+renderKnowledge();
+renderProblems();
+</script>
+</body>
+</html>
